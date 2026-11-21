@@ -526,14 +526,14 @@ function checkMerge(){
 
 /* ═══════════ 적 ═══════════ */
 function enemySpec(wave, boss, flyer){
-  const hp = TUNE.hpBase * Math.pow(TUNE.hpGrow, wave-1) * (boss ? 7 : 1) * (flyer ? .38 : 1) * rnd(.9,1.1);
+  const hp = TUNE.hpBase * Math.pow(TUNE.hpGrow, wave-1) * (boss ? (wave===WAVES_TOTAL ? 5 : 7) : 1) * (flyer ? .38 : 1) * rnd(.9,1.1);
   return {
     hp,
     spd: (boss ? 20 : rnd(26, 34)) * (1 + Math.min(.45, wave*TUNE.spdGrow)) * (flyer ? 1.95 : 1),
     boss: !!boss,
     flyer: !!flyer,
-    atk: (TUNE.atkBase * Math.pow(TUNE.atkGrow, wave-1)) * (boss ? 2.4 : 1),
-    wallDmg: (TUNE.wallBase + wave*TUNE.wallGrow) * (boss ? 2.6 : 1) * (flyer ? .55 : 1)
+    atk: (TUNE.atkBase * Math.pow(TUNE.atkGrow, wave-1)) * (boss ? 2.2 : 1),
+    wallDmg: (TUNE.wallBase + wave*TUNE.wallGrow) * (boss ? (wave===WAVES_TOTAL ? 2.0 : 2.6) : 1) * (flyer ? .55 : 1)
   };
 }
 function makeEnemy(spec){
@@ -554,16 +554,17 @@ function addEnemy(spec){ const e = makeEnemy(spec); G.enemies.push(e); return e;
 function startWave(){
   const w = G.wave;
   G.waveOn = true; G.waveClearT = -1;
-  const count = Math.min(28, TUNE.countBase + Math.round(w*TUNE.countGrow));
+  let count = Math.min(28, TUNE.countBase + Math.round(w*TUNE.countGrow));
+  if(w === WAVES_TOTAL) count = Math.max(6, Math.round(count*0.62));
   G.queue = [];
   const ghostChance = w >= 3 ? Math.min(.24, .10 + w*.010) : 0;
   for(let i=0;i<count;i++){
-    const isBoss = i === count-1 && w % 5 === 0;
+    const isBoss = i === count-1 && (w % 5 === 0 || w === WAVES_TOTAL);
     const flyer = !isBoss && w >= 3 && Math.random() < ghostChance;
     G.queue.push(enemySpec(w, isBoss, flyer));
   }
   G.spawnT = 0.55;
-  showBanner('웨이브 ' + w, w%5===0 ? '👑 보스가 옵니다!' : (w===1 ? '룰렛을 돌려 영웅을 소환!' : '적이 몰려옵니다'));
+  showBanner('웨이브 ' + w, (w%5===0 || w===WAVES_TOTAL) ? (w===WAVES_TOTAL ? '👑 최종 보스!' : '👑 보스가 옵니다!') : (w===1 ? '룰렛을 돌려 영웅을 소환!' : '적이 몰려옵니다'));
   syncAll();
 }
 function showBanner(main, sub){
